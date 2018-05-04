@@ -1,0 +1,24 @@
+{
+  "name": "react-native-share-extension",
+  "version": "1.2.2",
+  "description": "share extension using react-native for both ios and android",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:BigPun86/react-native-share-extension.git"
+  },
+  "keywords": ["react-component", "react-native", "share-extension"],
+  "author": {
+    "name": "Adel Bruno Grimm",
+    "email": "adel.grimm@icloud.com",
+    "url": "http://github.com/BigPun86"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mgvictor7/react-native-share-extension"
+  },
+  "homepage": "https://github.com/mgvictor7/react-native-share-extension"
+}
