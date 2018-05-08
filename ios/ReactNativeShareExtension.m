@@ -127,7 +127,16 @@ typedef void (^ProviderCallback)(NSString *content, NSString *contentType, BOOL 
       @try {
         if ([item isKindOfClass: NSURL.class]) {
           NSURL *url = (NSURL *)item;
-          return callback([url absoluteString], @"public.image", NO, nil);
+          NSString *ext = [url pathExtension];
+            
+          NSURL *tempContainerURL = [ReactNativeShareExtension tempContainerURL:appGroupId];
+          NSString *fileName = [NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString],ext];
+          NSURL *tempFileURL = [tempContainerURL URLByAppendingPathComponent: fileName];
+        
+          NSError *error = nil;
+          [[NSFileManager defaultManager] copyItemAtPath:[url path] toPath:[tempFileURL path] error:&error];
+            
+          return callback([tempFileURL absoluteString], @"public.image", NO, nil);
         } else if ([item isKindOfClass: UIImage.class]) {
           UIImage *image = (UIImage *)item;
           NSString *fileName = [NSString stringWithFormat:@"%@.jpg", [[NSUUID UUID] UUIDString]];
