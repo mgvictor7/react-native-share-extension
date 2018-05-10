@@ -190,7 +190,18 @@ typedef void (^ProviderCallback)(NSString *content, NSString *contentType, BOOL 
       }
       
       if ([item isKindOfClass:NSURL.class]) {
-        return callback([(NSURL *)item absoluteString], @"public.file-url", NO, nil);
+        NSURL *url = (NSURL *)item;
+        NSString *ext = [url pathExtension];
+          
+        NSURL *tempContainerURL = [ReactNativeShareExtension tempContainerURL:appGroupId];
+        NSString *fileName = [NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString],ext];
+        NSURL *tempFileURL = [tempContainerURL URLByAppendingPathComponent: fileName];
+          
+        NSError *error = nil;
+        [[NSFileManager defaultManager] copyItemAtPath:[url path] toPath:[tempFileURL path] error:&error];
+          
+        return callback([tempFileURL absoluteString], @"public.file-url", NO, nil);
+        // return callback([(NSURL *)item absoluteString], @"public.file-url", NO, nil);
       } else if ([item isKindOfClass:NSString.class]) {
         return callback((NSString *)item, @"public.file-url", NO, nil);
       }
