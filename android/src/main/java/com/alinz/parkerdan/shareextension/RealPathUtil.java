@@ -15,7 +15,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Random;
+import android.provider.OpenableColumns;
+
+import android.util.Log;
 
 public class RealPathUtil {
  public static String getRealPathFromURI(final Context context, final Uri uri) {
@@ -83,29 +85,31 @@ public class RealPathUtil {
  }
 
  private static Uri saveFile(final Context context, Uri uri) {
-     Bitmap bitmap = null;
      try {
          InputStream inputStream =
                  context.getContentResolver().openInputStream(uri);
-         bitmap= BitmapFactory.decodeStream(inputStream);
+
          String sdCardPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
          File myDir = new File(sdCardPath);
          if (!myDir.exists()) {
              myDir.mkdir();
          }
 
-         Random generator = new Random();
-         int n = 10000;
-         n = generator.nextInt(n);
-         String fname = "Image-" + n + ".jpg";
-         File file = new File(myDir, fname);
+         String filename = getFileName(context, uri);
+         File file = new File(myDir, filename);
          if (file.exists())
              file.delete();
          try {
              FileOutputStream out = new FileOutputStream(file);
-             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
-             out.flush();
-             out.close();
+            int read = 0;
+            byte[] bytes = new byte[1024];
+
+            while ((read = inputStream.read(bytes)) != -1) {
+                out.write(bytes, 0, read);
+            }
+
+            out.close();
+            inputStream.close();
 
 
              Uri newURi = Uri.fromFile(file);
@@ -121,6 +125,28 @@ public class RealPathUtil {
      }
 
      return null;
+ }
+ 
+ private static String getFileName(final Context context,  Uri uri) {
+   String result = null;
+   if (uri.getScheme().equals("content")) {
+     Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+     try {
+       if (cursor != null && cursor.moveToFirst()) {
+         result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+       }
+     } finally {
+       cursor.close();
+     }
+   }
+   if (result == null) {
+     result = uri.getPath();
+     int cut = result.lastIndexOf('/');
+     if (cut != -1) {
+       result = result.substring(cut + 1);
+     }
+   }
+   return result;
  }
 
  /**
