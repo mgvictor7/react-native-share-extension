@@ -34,6 +34,7 @@ public class ShareModule extends ReactContextBaseJavaModule {
     mediaTypesSupported.add("video");
     mediaTypesSupported.add("audio");
     mediaTypesSupported.add("image");
+    mediaTypesSupported.add("application/pdf");
     
     Activity mActivity = getCurrentActivity();
 
@@ -59,6 +60,7 @@ public class ShareModule extends ReactContextBaseJavaModule {
       mediaTypesSupported.add("video");
       mediaTypesSupported.add("audio");
       mediaTypesSupported.add("image");
+      mediaTypesSupported.add("application/pdf");
 
       String value = "";
       String type = "";
@@ -80,10 +82,11 @@ public class ShareModule extends ReactContextBaseJavaModule {
         if (Intent.ACTION_SEND.equals(action) && "text/plain".equals(type)) {
           value = intent.getStringExtra(Intent.EXTRA_TEXT);
         }
-        else if (Intent.ACTION_SEND.equals(action) && (mediaTypesSupported.contains(typePart))) {
+        else if (Intent.ACTION_SEND.equals(action) && (mediaTypesSupported.contains(typePart) || mediaTypesSupported.contains("application/pdf"))) {
           Uri uri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
-          value = "file://" + RealPathUtil.getRealPathFromURI(currentActivity, uri);
-
+          if (uri != null) {
+            value = "file://" + RealPathUtil.getRealPathFromURI(currentActivity, uri);
+          }
        } else {
          value = "";
        }
