@@ -2,8 +2,6 @@ package com.alinz.parkerdan.shareextension;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.DocumentsContract;
@@ -11,13 +9,12 @@ import android.provider.MediaStore;
 import android.content.ContentUris;
 import android.os.Environment;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import android.provider.OpenableColumns;
-
-import android.util.Log;
+import java.util.UUID;
 
 public class RealPathUtil {
  public static String getRealPathFromURI(final Context context, final Uri uri) {
@@ -72,9 +69,7 @@ public class RealPathUtil {
      }
      // MediaStore (and general)
      else if ("content".equalsIgnoreCase(uri.getScheme())) {
-
-         // Return the remote address
-         return saveFile(context, uri).getPath();
+         return getImagePath(context, uri);
      }
      // File
      else if ("file".equalsIgnoreCase(uri.getScheme())) {
@@ -82,71 +77,6 @@ public class RealPathUtil {
      }
 
      return null;
- }
-
- private static Uri saveFile(final Context context, Uri uri) {
-     try {
-         InputStream inputStream =
-                 context.getContentResolver().openInputStream(uri);
-
-         String sdCardPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
-         File myDir = new File(sdCardPath);
-         if (!myDir.exists()) {
-             myDir.mkdir();
-         }
-
-         String filename = getFileName(context, uri);
-         File file = new File(myDir, filename);
-         if (file.exists())
-             file.delete();
-         try {
-             FileOutputStream out = new FileOutputStream(file);
-            int read = 0;
-            byte[] bytes = new byte[1024];
-
-            while ((read = inputStream.read(bytes)) != -1) {
-                out.write(bytes, 0, read);
-            }
-
-            out.close();
-            inputStream.close();
-
-
-             Uri newURi = Uri.fromFile(file);
-
-             return newURi;
-         }
-         catch (Exception e) {
-             e.printStackTrace();
-         }
-
-     }catch (IOException e) {
-
-     }
-
-     return null;
- }
- 
- private static String getFileName(final Context context,  Uri uri) {
-   String result = null;
-   if (uri.getScheme().equals("content")) {
-     Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
-     try {
-       if (cursor != null && cursor.moveToFirst()) {
-         result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-       }
-     } finally {
-       cursor.close();
-     }
-   }
-   if (result == null) {
-     result = uri.getPath();
-     int cut = result.lastIndexOf('/');
-     if (cut != -1) {
-       result = result.substring(cut + 1);
-     }
-   }
-   return result;
  }
 
  /**
@@ -207,12 +137,77 @@ public class RealPathUtil {
      return "com.android.providers.media.documents".equals(uri.getAuthority());
  }
 
+ public static String getImagePath(Context context, Uri uri){
+    if ("content".equalsIgnoreCase(uri.getScheme())) {
+
+        if (isGoogleOldPhotosUri(uri)) {
+            // return http path, then download file.
+            return uri.getLastPathSegment();
+        } else if (isGoogleNewPhotosUri(uri) || isMMSFile(uri)) {
+            // copy from uri. context.getContentResolver().openInputStream(uri);
+            return copyFile(context, uri);
+        }
+    }
+
+    return getDataColumn(context, uri, null, null);
+ }
+
  /**
   * @param uri The Uri to check.
   * @return Whether the Uri authority is Google Photos.
   */
- public static boolean isGooglePhotosUri(Uri uri) {
+ public static boolean isGoogleOldPhotosUri(Uri uri) {
      return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+ }
+
+ public static boolean isGoogleNewPhotosUri(Uri uri) {
+    return "com.google.android.apps.photos.contentprovider".equals(uri.getAuthority());
+ }
+
+ public static boolean isMMSFile(Uri uri) {
+    return "com.android.mms.file".equals(uri.getAuthority());
+}
+
+ private static String copyFile(Context context, Uri uri) {
+
+    String filePath;
+    InputStream inputStream = null;
+    BufferedOutputStream outStream = null;
+    try {
+        inputStream = context.getContentResolver().openInputStream(uri);
+
+        File extDir = context.getExternalFilesDir(null);
+        filePath = extDir.getAbsolutePath() + "/IMG_" + UUID.randomUUID().toString() + ".jpg";
+        outStream = new BufferedOutputStream(new FileOutputStream
+                (filePath));
+
+        byte[] buf = new byte[2048];
+        int len;
+        while ((len = inputStream.read(buf)) > 0) {
+            outStream.write(buf, 0, len);
+        }
+
+    } catch (IOException e) {
+        e.printStackTrace();
+        filePath = "";
+    } finally {
+        try {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            if (outStream != null) {
+                outStream.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    return filePath;
  }
 
 }
