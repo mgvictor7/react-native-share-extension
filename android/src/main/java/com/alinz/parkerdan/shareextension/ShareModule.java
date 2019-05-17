@@ -16,8 +16,10 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ShareModule extends ReactContextBaseJavaModule {
+import android.util.Log;
 
+public class ShareModule extends ReactContextBaseJavaModule {
+  String TAG = "ShareModule";
 
   public ShareModule(ReactApplicationContext reactContext) {
       super(reactContext);
@@ -30,22 +32,25 @@ public class ShareModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void close() {
-    Set<String> mediaTypesSupported = new HashSet<String>();
-    mediaTypesSupported.add("video");
-    mediaTypesSupported.add("audio");
-    mediaTypesSupported.add("image");
-    mediaTypesSupported.add("application/pdf");
-    
+    String[] mediaTypesSupported = {"video", "audio", "image", "application/pdf"};
+
     Activity mActivity = getCurrentActivity();
 
-    if(mActivity == null) { return; }
+    if(mActivity == null) {
+      return;
+    }
 
     Intent intent = mActivity.getIntent();
     String type = intent.getType();
     if ("text/plain".equals(type)) {
       intent.removeExtra(Intent.EXTRA_TEXT);
-    } else if (mediaTypesSupported.contains(type)) {
-      intent.removeExtra(Intent.EXTRA_STREAM);
+    } else if(type != null) {
+      for (int i = 0; i < mediaTypesSupported.length; i++) {
+        if (type.contains(mediaTypesSupported[i])) {
+          intent.removeExtra(Intent.EXTRA_STREAM);
+          break;
+        }
+      }
     }
   }
 
@@ -78,7 +83,7 @@ public class ShareModule extends ReactContextBaseJavaModule {
         } else {
           typePart = type.substring(0, type.indexOf('/'));
         }
-        
+
         if (Intent.ACTION_SEND.equals(action) && "text/plain".equals(type)) {
           value = intent.getStringExtra(Intent.EXTRA_TEXT);
         }

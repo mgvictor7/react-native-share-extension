@@ -20,6 +20,8 @@ import android.provider.OpenableColumns;
 import android.util.Log;
 
 public class RealPathUtil {
+ String TAG = "RealPathUtil";
+
  public static String getRealPathFromURI(final Context context, final Uri uri) {
 
      final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
@@ -126,7 +128,7 @@ public class RealPathUtil {
 
      return null;
  }
- 
+
  private static String getFileName(final Context context,  Uri uri) {
    String result = null;
    if (uri.getScheme().equals("content")) {

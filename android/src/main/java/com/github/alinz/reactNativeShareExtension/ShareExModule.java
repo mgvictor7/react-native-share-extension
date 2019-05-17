@@ -14,7 +14,6 @@ import com.facebook.react.bridge.Arguments;
 import javax.annotation.Nullable;
 
 public class ShareExModule extends ReactContextBaseJavaModule implements ActivityEventListener {
-
     public ShareExModule(ReactApplicationContext reactContext) {
         super(reactContext);
         reactContext.addActivityEventListener(this);
@@ -64,7 +63,7 @@ public class ShareExModule extends ReactContextBaseJavaModule implements Activit
     }
 
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) { }
-  
+
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) { }
 
     public void onNewIntent(Intent intent) {  }

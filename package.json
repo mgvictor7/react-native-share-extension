@@ -10,7 +10,11 @@
     "type": "git",
     "url": "git@github.com:BigPun86/react-native-share-extension.git"
   },
-  "keywords": ["react-component", "react-native", "share-extension"],
+  "keywords": [
+    "react-component",
+    "react-native",
+    "share-extension"
+  ],
   "author": {
     "name": "Adel Bruno Grimm",
     "email": "adel.grimm@icloud.com",
