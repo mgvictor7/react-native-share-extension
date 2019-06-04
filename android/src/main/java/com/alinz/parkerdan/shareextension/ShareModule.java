@@ -32,25 +32,9 @@ public class ShareModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void close() {
-    String[] mediaTypesSupported = {"video", "audio", "image", "application/pdf"};
-
-    Activity mActivity = getCurrentActivity();
-
-    if(mActivity == null) {
-      return;
-    }
-
-    Intent intent = mActivity.getIntent();
-    String type = intent.getType();
-    if ("text/plain".equals(type)) {
-      intent.removeExtra(Intent.EXTRA_TEXT);
-    } else if(type != null) {
-      for (int i = 0; i < mediaTypesSupported.length; i++) {
-        if (type.contains(mediaTypesSupported[i])) {
-          intent.removeExtra(Intent.EXTRA_STREAM);
-          break;
-        }
-      }
+    Activity currentActivity = getCurrentActivity();
+    if (currentActivity != null) {
+      getCurrentActivity().finish();
     }
   }
 
