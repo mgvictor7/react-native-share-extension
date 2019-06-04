@@ -74,7 +74,7 @@ public class ShareModule extends ReactContextBaseJavaModule {
         else if (Intent.ACTION_SEND.equals(action) && (mediaTypesSupported.contains(typePart) || mediaTypesSupported.contains("application/pdf"))) {
           Uri uri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
           if (uri != null) {
-            value = "file://" + RealPathUtil.getRealPathFromURI(currentActivity, uri);
+            value = "file://" + RealPathUtil.getRealPath(currentActivity, uri);
           }
        } else {
          value = "";
