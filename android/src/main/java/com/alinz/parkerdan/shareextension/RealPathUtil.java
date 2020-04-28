@@ -18,6 +18,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import android.provider.OpenableColumns;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 
 import android.util.Log;
 
@@ -107,7 +109,10 @@ public class RealPathUtil {
                 final String id = DocumentsContract.getDocumentId(uri);
                 final Uri contentUri = ContentUris.withAppendedId(
                         Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-
+                if (isNewGooglePhotosUri(uri)) {
+                    String newUri = getImageUrlWithAuthority(context, uri);
+                    return getDataColumn(context, Uri.parse(newUri), null, null);
+                }
                 return getDataColumn(context, contentUri, null, null);
             }
             // MediaProvider
@@ -130,6 +135,11 @@ public class RealPathUtil {
                         split[1]
                 };
 
+                if (isNewGooglePhotosUri(uri)) {
+                    String pathUri = uri.getPath();
+                    String newUri = getImageUrlWithAuthority(context, uri);
+                    return getDataColumn(context, Uri.parse(newUri), null, null);
+                }
                 return getDataColumn(context, contentUri, selection, selectionArgs);
             }
         }
@@ -140,6 +150,11 @@ public class RealPathUtil {
             if (isGooglePhotosUri(uri))
                 return uri.getLastPathSegment();
 
+            if (isNewGooglePhotosUri(uri)) {
+                String pathUri = uri.getPath();
+                String newUri = getImageUrlWithAuthority(context, uri);
+                return getDataColumn(context, Uri.parse(newUri), null, null);
+            }
             return getDataColumn(context, uri, null, null);
         }
         // File
@@ -160,8 +175,7 @@ public class RealPathUtil {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    public static String getDataColumn(Context context, Uri uri, String selection,
-                                       String[] selectionArgs) {
+    public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
 
         Cursor cursor = null;
         final String column = "_data";
@@ -214,6 +228,50 @@ public class RealPathUtil {
      */
     public static boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
+    }
+
+    public static boolean isNewGooglePhotosUri(Uri uri) {
+        return "com.google.android.apps.photos.contentprovider".equals(uri.getAuthority());
+    }
+
+    private static String getImageUrlWithAuthority(Context context, Uri uri) {
+        InputStream is = null;
+
+        if (uri.getAuthority() != null)
+        {
+            try
+            {
+                is = context.getContentResolver().openInputStream(uri);
+                Bitmap bmp = BitmapFactory.decodeStream(is);
+                return writeToTempImageAndGetPathUri(context, bmp).toString();
+            }
+            catch (FileNotFoundException e)
+            {
+                e.printStackTrace();
+            }
+            finally
+            {
+                try
+                {
+                    if (is != null)
+                    {
+                        is.close();
+                    }
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Uri writeToTempImageAndGetPathUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        return Uri.parse(path);
     }
 
 }
