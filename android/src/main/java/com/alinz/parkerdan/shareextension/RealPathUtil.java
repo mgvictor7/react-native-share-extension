@@ -175,26 +175,68 @@ public class RealPathUtil {
      * @param selectionArgs (Optional) Selection arguments used in the query.
      * @return The value of the _data column, which is typically a file path.
      */
-    public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+    private static String getDataColumn(Context context, Uri uri, String selection,
+                                        String[] selectionArgs) {
 
         Cursor cursor = null;
-        final String column = "_data";
         final String[] projection = {
-                column
+                MediaStore.MediaColumns.DATA,
+                MediaStore.MediaColumns.DISPLAY_NAME,
         };
 
         try {
             cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
                     null);
             if (cursor != null && cursor.moveToFirst()) {
-                final int index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(index);
+                // Fall back to writing to file if _data column does not exist
+                final int index = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                String path = index > -1 ? cursor.getString(index) : null;
+                if (path != null) {
+                    return cursor.getString(index);
+                } else {
+                    final int indexDisplayName = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME);
+                    String fileName = cursor.getString(indexDisplayName);
+                    File fileWritten = writeToFile(context, fileName, uri);
+                    return fileWritten.getAbsolutePath();
+                }
             }
         } finally {
             if (cursor != null)
                 cursor.close();
         }
         return null;
+    }
+
+        /**
+     * If an image/video has been selected from a cloud storage, this method
+     * should be call to download the file in the cache folder.
+     *
+     * @param context The context
+     * @param fileName donwloaded file's name
+     * @param uri file's URI
+     * @return file that has been written
+     */
+    private static File writeToFile(Context context, String fileName, Uri uri) {
+        String tmpDir = context.getCacheDir() + "/laycos";
+        Boolean created = new File(tmpDir).mkdir();
+        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+        File path = new File(tmpDir);
+        File file = new File(path, fileName);
+        try {
+            FileOutputStream oos = new FileOutputStream(file);
+            byte[] buf = new byte[8192];
+            InputStream is = context.getContentResolver().openInputStream(uri);
+            int c = 0;
+            while ((c = is.read(buf, 0, buf.length)) > 0) {
+                oos.write(buf, 0, c);
+                oos.flush();
+            }
+            oos.close();
+            is.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return file;
     }
 
 
